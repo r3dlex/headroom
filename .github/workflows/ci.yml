@@ -405,6 +405,10 @@ jobs:
       - uses: wagoid/commitlint-github-action@v6
         with:
           configFile: .commitlintrc.json
+          # Upstream-sync merge PRs include already-accepted upstream history.
+          # Lint only the contributor-owned tip commit rather than re-linting
+          # every inherited commit against this fork's local convention.
+          commitDepth: 1
 
   build:
     needs: changes
