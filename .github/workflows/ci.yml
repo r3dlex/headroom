@@ -402,7 +402,14 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: wagoid/commitlint-github-action@v6
+      - name: Lint all contributor commits
+        if: ${{ !startsWith(github.head_ref, 'chore/sync-upstream-') }}
+        uses: wagoid/commitlint-github-action@v6
+        with:
+          configFile: .commitlintrc.json
+      - name: Lint upstream-sync tip commit
+        if: ${{ startsWith(github.head_ref, 'chore/sync-upstream-') }}
+        uses: wagoid/commitlint-github-action@v6
         with:
           configFile: .commitlintrc.json
           # Upstream-sync merge PRs include already-accepted upstream history.
