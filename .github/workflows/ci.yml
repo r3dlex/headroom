@@ -434,9 +434,31 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: wagoid/commitlint-github-action@v6
-        with:
-          configFile: .commitlintrc.json
+      - name: Fetch upstream history
+        run: >-
+          git fetch --no-tags
+          https://github.com/headroomlabs-ai/headroom.git
+          main:refs/remotes/upstream/main
+      - name: Lint all contributor commits
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          commits="$(git rev-list --reverse "${BASE_SHA}..HEAD" \
+            --not refs/remotes/upstream/main)"
+
+          if [[ -z "${commits}" ]]; then
+            echo "No contributor-owned commits to lint."
+            exit 0
+          fi
+
+          while IFS= read -r commit; do
+            echo "Linting ${commit}: $(git log -1 --format=%s "${commit}")"
+            git log -1 --format=%B "${commit}" | \
+              npx --yes \
+                --package @commitlint/cli@21.2.1 \
+                --package @commitlint/config-conventional@21.2.0 \
+                commitlint --config .commitlintrc.json
+          done <<<"${commits}"
 
   build:
     needs: changes
